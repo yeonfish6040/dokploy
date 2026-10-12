@@ -154,7 +154,7 @@ export const createPreviewDeployment = async (
 	const githubProvider = await findGithubById(application.githubId);
 	const octokit = authGithub(githubProvider);
 
-	const runningComment = getIssueComment(
+	const runningComment = await getIssueComment(
 		application.name,
 		"initializing",
 		`${application.previewHttps ? "https" : "http"}://${generateDomain}`,

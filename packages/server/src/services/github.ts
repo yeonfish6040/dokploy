@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
 import { authGithub } from "../utils/providers/github";
+import { getDokployUrl } from "./admin";
 import { updatePreviewDeployment } from "./preview-deployment";
 
 export type Github = typeof github.$inferSelect;
@@ -78,7 +79,7 @@ export const updateGithub = async (
 		.then((response) => response[0]);
 };
 
-export const getIssueComment = (
+export const getIssueComment = async (
 	appName: string,
 	status: "success" | "error" | "running" | "initializing",
 	previewDomain: string,
@@ -97,6 +98,8 @@ export const getIssueComment = (
 | Name       | Status       | Preview                             | Updated (UTC)         |
 |------------|--------------|-------------------------------------|-----------------------|
 | ${appName}  | ${statusMessage} | [Preview URL](${previewDomain}) | ${new Date().toISOString()} |
+
+[Dokploy Dashboard](${await getDokployUrl()})
 `;
 
 	return finished;
@@ -176,7 +179,7 @@ export const createPreviewDeploymentComment = async ({
 	const github = await findGithubById(githubId);
 	const octokit = authGithub(github);
 
-	const runningComment = getIssueComment(
+	const runningComment = await getIssueComment(
 		appName,
 		"initializing",
 		previewDomain,
