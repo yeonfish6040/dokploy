@@ -209,9 +209,7 @@ export const adminProcedure = t.procedure.use(({ ctx, next }) => {
 });
 
 /**
- * Requires admin/owner role AND enterprise enabled with a license key in DB.
- * Does NOT call the license server on every request; full validation (haveValidLicenseKey)
- * is used in the UI gate and when activating/validating keys.
+ * Requires admin/owner role for enterprise-only procedures.
  */
 export const enterpriseProcedure = t.procedure.use(async ({ ctx, next }) => {
 	if (
