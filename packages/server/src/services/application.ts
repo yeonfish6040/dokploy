@@ -40,6 +40,10 @@ import {
 } from "./deployment";
 import { type Domain, getDomainHost } from "./domain";
 import {
+	createGithubDeploymentCheck,
+	getDeploymentCommitSha,
+} from "./github-deployment-check";
+import {
 	createPreviewDeploymentComment,
 	getIssueComment,
 	issueCommentExists,
@@ -197,11 +201,29 @@ export const deployApplication = async ({
 		title: titleLog,
 		description: descriptionLog,
 	});
+	const githubCheck = createGithubDeploymentCheck({
+		application,
+		deploymentId: deployment.deploymentId,
+		detailsUrl: buildLink,
+	});
+	await githubCheck.start(getDeploymentCommitSha(descriptionLog));
 
 	try {
 		let command = "set -e;";
 		if (application.sourceType === "github") {
-			command += await cloneGithubRepository(applicationEntity);
+			const cloneCommand = await cloneGithubRepository(applicationEntity);
+			const cloneWithLog = `(${cloneCommand}) >> ${deployment.logPath} 2>&1`;
+			if (serverId) {
+				await execAsyncRemote(serverId, cloneWithLog);
+			} else {
+				await execAsync(cloneWithLog);
+			}
+			const commitInfo = await getGitCommitInfo({
+				appName: application.appName,
+				type: "application",
+				serverId,
+			});
+			await githubCheck.start(commitInfo?.hash);
 		} else if (application.sourceType === "gitlab") {
 			command += await cloneGitlabRepository(applicationEntity);
 		} else if (application.sourceType === "gitea") {
@@ -244,7 +266,9 @@ export const deployApplication = async ({
 			domains: application.domains,
 			environmentName: application.environment.name,
 		});
+		await githubCheck.complete("success");
 	} catch (error) {
+		await githubCheck.complete("failure");
 		let command = "";
 
 		// Only log details for non-ExecError errors
@@ -311,8 +335,21 @@ export const rebuildApplication = async ({
 		title: titleLog,
 		description: descriptionLog,
 	});
+	const githubCheck = createGithubDeploymentCheck({
+		application,
+		deploymentId: deployment.deploymentId,
+		detailsUrl: buildLink,
+	});
 
 	try {
+		if (application.sourceType === "github") {
+			const commitInfo = await getGitCommitInfo({
+				appName: application.appName,
+				type: "application",
+				serverId,
+			});
+			await githubCheck.start(commitInfo?.hash);
+		}
 		let command = "set -e;";
 		// Check case for docker only
 		command += await getBuildCommand(application);
@@ -335,7 +372,9 @@ export const rebuildApplication = async ({
 			domains: application.domains,
 			environmentName: application.environment.name,
 		});
+		await githubCheck.complete("success");
 	} catch (error) {
+		await githubCheck.complete("failure");
 		let command = "";
 
 		// Only log details for non-ExecError errors
@@ -386,6 +425,14 @@ export const deployPreviewApplication = async ({
 	});
 
 	const previewDomain = getDomainHost(previewDeployment?.domain as Domain);
+	const buildLink = `${await getDokployUrl()}/dashboard/project/${application.environment.projectId}/environment/${application.environmentId}/services/application/${application.applicationId}?tab=preview-deployments`;
+	const githubCheck = createGithubDeploymentCheck({
+		application,
+		deploymentId: deployment.deploymentId,
+		detailsUrl: buildLink,
+		preview: true,
+	});
+	await githubCheck.start(getDeploymentCommitSha(descriptionLog));
 	const issueParams = {
 		owner: application?.owner || "",
 		repository: application?.repository || "",
@@ -435,11 +482,23 @@ export const deployPreviewApplication = async ({
 
 		let command = "set -e;";
 		if (application.sourceType === "github") {
-			command += await cloneGithubRepository({
+			const cloneCommand = await cloneGithubRepository({
 				...application,
 				appName: previewDeployment.appName,
 				branch: previewDeployment.branch,
 			});
+			const cloneWithLog = `(${cloneCommand}) >> ${deployment.logPath} 2>&1`;
+			if (application.serverId) {
+				await execAsyncRemote(application.serverId, cloneWithLog);
+			} else {
+				await execAsync(cloneWithLog);
+			}
+			const commitInfo = await getGitCommitInfo({
+				appName: previewDeployment.appName,
+				type: "application",
+				serverId: application.serverId,
+			});
+			await githubCheck.start(commitInfo?.hash);
 			command += await getBuildCommand(application);
 
 			const commandWithLog = `(${command}) >> ${deployment.logPath} 2>&1`;
@@ -463,7 +522,9 @@ export const deployPreviewApplication = async ({
 		await updatePreviewDeployment(previewDeploymentId, {
 			previewStatus: "done",
 		});
+		await githubCheck.complete("success");
 	} catch (error) {
+		await githubCheck.complete("failure");
 		const comment = getIssueComment(application.name, "error", previewDomain);
 		await updateIssueComment({
 			...issueParams,
@@ -501,6 +562,13 @@ export const rebuildPreviewApplication = async ({
 	});
 
 	const previewDomain = getDomainHost(previewDeployment?.domain as Domain);
+	const buildLink = `${await getDokployUrl()}/dashboard/project/${application.environment.projectId}/environment/${application.environmentId}/services/application/${application.applicationId}?tab=preview-deployments`;
+	const githubCheck = createGithubDeploymentCheck({
+		application,
+		deploymentId: deployment.deploymentId,
+		detailsUrl: buildLink,
+		preview: true,
+	});
 	const issueParams = {
 		owner: application?.owner || "",
 		repository: application?.repository || "",
@@ -510,6 +578,14 @@ export const rebuildPreviewApplication = async ({
 	};
 
 	try {
+		if (application.sourceType === "github") {
+			const commitInfo = await getGitCommitInfo({
+				appName: previewDeployment.appName,
+				type: "application",
+				serverId: application.serverId,
+			});
+			await githubCheck.start(commitInfo?.hash);
+		}
 		const commentExists = await issueCommentExists({
 			...issueParams,
 		});
@@ -577,7 +653,9 @@ export const rebuildPreviewApplication = async ({
 		await updatePreviewDeployment(previewDeploymentId, {
 			previewStatus: "done",
 		});
+		await githubCheck.complete("success");
 	} catch (error) {
+		await githubCheck.complete("failure");
 		let command = "";
 
 		// Only log details for non-ExecError errors
