@@ -415,7 +415,7 @@ export const deployPreviewApplication = async ({
 
 			issueParams.comment_id = Number.parseInt(result?.pullRequestCommentId);
 		}
-		const buildingComment = getIssueComment(
+		const buildingComment = await getIssueComment(
 			application.name,
 			"running",
 			previewDomain,
@@ -450,7 +450,7 @@ export const deployPreviewApplication = async ({
 			}
 			await mechanizeDockerContainer(application);
 		}
-		const successComment = getIssueComment(
+		const successComment = await getIssueComment(
 			application.name,
 			"success",
 			previewDomain,
@@ -464,7 +464,11 @@ export const deployPreviewApplication = async ({
 			previewStatus: "done",
 		});
 	} catch (error) {
-		const comment = getIssueComment(application.name, "error", previewDomain);
+		const comment = await getIssueComment(
+			application.name,
+			"error",
+			previewDomain,
+		);
 		await updateIssueComment({
 			...issueParams,
 			body: `### Dokploy Preview Deployment\n\n${comment}`,
@@ -532,7 +536,7 @@ export const rebuildPreviewApplication = async ({
 			issueParams.comment_id = Number.parseInt(result?.pullRequestCommentId);
 		}
 
-		const buildingComment = getIssueComment(
+		const buildingComment = await getIssueComment(
 			application.name,
 			"running",
 			previewDomain,
@@ -564,7 +568,7 @@ export const rebuildPreviewApplication = async ({
 		}
 		await mechanizeDockerContainer(application);
 
-		const successComment = getIssueComment(
+		const successComment = await getIssueComment(
 			application.name,
 			"success",
 			previewDomain,
@@ -595,7 +599,11 @@ export const rebuildPreviewApplication = async ({
 			await execAsync(command);
 		}
 
-		const comment = getIssueComment(application.name, "error", previewDomain);
+		const comment = await getIssueComment(
+			application.name,
+			"error",
+			previewDomain,
+		);
 		await updateIssueComment({
 			...issueParams,
 			body: `### Dokploy Preview Deployment\n\n${comment}`,

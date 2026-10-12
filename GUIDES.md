@@ -48,3 +48,11 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 3. Download the installer
 4. Run the installer and follow the prompts
 5. Start Docker Desktop from the Start menu
+
+## Preview deployment comments
+
+GitHub pull request comments for preview deployments include both the Preview URL
+and a Dokploy Dashboard link. The dashboard link uses the configured Dokploy
+domain and HTTP/HTTPS setting, or the server IP and port when no domain is set.
+The link is included during initialization, builds, successful deployments,
+failures, and when a deleted comment is recreated.
