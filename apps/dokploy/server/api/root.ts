@@ -34,6 +34,7 @@ import { portRouter } from "./routers/port";
 import { postgresRouter } from "./routers/postgres";
 import { previewDeploymentRouter } from "./routers/preview-deployment";
 import { projectRouter } from "./routers/project";
+import { projectExportImportRouter } from "./routers/project-export-import";
 import { auditLogRouter } from "./routers/proprietary/audit-log";
 import { customRoleRouter } from "./routers/proprietary/custom-role";
 import { forwardAuthRouter } from "./routers/proprietary/forward-auth";
@@ -45,14 +46,17 @@ import { redirectsRouter } from "./routers/redirects";
 import { redisRouter } from "./routers/redis";
 import { registryRouter } from "./routers/registry";
 import { rollbackRouter } from "./routers/rollbacks";
+import { sandboxRouter } from "./routers/sandbox";
 import { scheduleRouter } from "./routers/schedule";
 import { securityRouter } from "./routers/security";
 import { serverRouter } from "./routers/server";
+import { serverSecurityRouter } from "./routers/server-security";
 import { settingsRouter } from "./routers/settings";
 import { sshRouter } from "./routers/ssh-key";
 import { stripeRouter } from "./routers/stripe";
 import { swarmRouter } from "./routers/swarm";
 import { tagRouter } from "./routers/tag";
+import { telemetryProviderRouter } from "./routers/telemetry-provider";
 import { transferRouter } from "./routers/transfer";
 import { userRouter } from "./routers/user";
 import { vaultProviderRouter } from "./routers/vault-provider";
@@ -85,6 +89,7 @@ export const appRouter = createTRPCRouter({
 	github: githubRouter,
 	gitlab: gitlabRouter,
 	libsql: libsqlRouter,
+	telemetryProvider: telemetryProviderRouter,
 	mariadb: mariadbRouter,
 	mongo: mongoRouter,
 	mounts: mountRouter,
@@ -99,6 +104,7 @@ export const appRouter = createTRPCRouter({
 	registry: registryRouter,
 	security: securityRouter,
 	server: serverRouter,
+	serverSecurity: serverSecurityRouter,
 	settings: settingsRouter,
 	sshKey: sshRouter,
 	stripe: stripeRouter,
@@ -122,6 +128,8 @@ export const appRouter = createTRPCRouter({
 	patch: patchRouter,
 	overview: overviewRouter,
 	transfer: transferRouter,
+	sandbox: sandboxRouter,
+	projectExportImport: projectExportImportRouter,
 });
 
 // export type definition of API

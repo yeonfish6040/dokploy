@@ -32,6 +32,7 @@ vi.mock("@dokploy/server/services/deployment", () => ({
 	}),
 	updateDeploymentStatus: mocks.deploymentStatus,
 	updateDeployment: vi.fn(),
+	writeDeploymentErrorLog: vi.fn(),
 }));
 vi.mock("@dokploy/server/services/github", () => ({
 	findGithubById: vi.fn().mockResolvedValue({ githubId: "github-id" }),
@@ -236,7 +237,7 @@ describe("GitHub check lifecycle during application deployments", () => {
 		);
 	});
 
-	it("reads normal deployment commits from the build server and preview commits from their service directory", async () => {
+	it("reads normal and preview deployment commits from their build server directories", async () => {
 		vi.mocked(db.query.applications.findFirst).mockResolvedValue({
 			...application(),
 			buildServerId: "build-server",
@@ -253,7 +254,7 @@ describe("GitHub check lifecycle during application deployments", () => {
 		expect(mocks.commitInfo).toHaveBeenCalledWith(
 			expect.objectContaining({
 				appName: "preview-web-random",
-				serverId: "runtime-server",
+				serverId: "build-server",
 			}),
 		);
 	});

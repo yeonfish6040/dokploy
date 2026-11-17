@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@dokploy/server/db/schema", () => ({
 	deployments: {},
+	applications: { applicationId: "applicationId" },
 	previewDeployments: { previewDeploymentId: "previewDeploymentId" },
 }));
 vi.mock("@dokploy/server/templates", () => ({
